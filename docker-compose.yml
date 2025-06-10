@@ -1,0 +1,31 @@
+version: '3.7'
+services:
+  postgres:
+    image: postgres:latest
+    container_name: pg-game
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ashkan}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - game-network
+
+  redis:
+    image: redis/redis-stack-server
+    container_name: redis-game
+    ports:
+      - "6379:6379"
+    networks:
+      - game-network
+    volumes:
+      - redis_data:/data  # Persist Redis data in the volume
+volumes:
+  postgres_data:  # Declare the volume for PostgreSQL data
+    driver: local
+  redis_data:  # Declare the volume for Redis data (this was missing before)
+    driver: local
+networks:
+  game-network:
+    driver: bridge
