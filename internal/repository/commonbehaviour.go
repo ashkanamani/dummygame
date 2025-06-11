@@ -12,17 +12,14 @@ import (
 // Check that RedisCommonBehaviour implements CommonBehaviour
 var _ CommonBehaviour[entity.Entity] = &RedisCommonBehaviour[entity.Entity]{}
 
-type CommonBehaviour[T entity.Entity] interface {
-	Get(ctx context.Context, id entity.ID) (T, error)
-	Save(ctx context.Context, entity entity.Entity) error
-}
-
 type RedisCommonBehaviour[T entity.Entity] struct {
 	client rueidis.Client
 }
 
-func NewRedisCommonBehaviour[T entity.Entity]() *RedisCommonBehaviour[T] {
-	return &RedisCommonBehaviour[T]{}
+func NewRedisCommonBehaviour[T entity.Entity](client rueidis.Client) *RedisCommonBehaviour[T] {
+	return &RedisCommonBehaviour[T]{
+		client: client,
+	}
 }
 
 func (r *RedisCommonBehaviour[T]) Get(ctx context.Context, id entity.ID) (T, error) {
@@ -32,7 +29,7 @@ func (r *RedisCommonBehaviour[T]) Get(ctx context.Context, id entity.ID) (T, err
 	if err != nil {
 		// handle redis nil error
 		if errors.Is(err, rueidis.Nil) {
-			return t, ErrNotFound
+			return t, ErrorNotFound
 		}
 		logrus.WithError(err).WithField("id", id).Errorln("could not get from redis.")
 		return t, err
@@ -40,7 +37,7 @@ func (r *RedisCommonBehaviour[T]) Get(ctx context.Context, id entity.ID) (T, err
 	return jsonhelper.Decode[T]([]byte(val)), nil
 }
 
-func (r *RedisCommonBehaviour[T]) Save(ctx context.Context, entity entity.Entity) error {
+func (r *RedisCommonBehaviour[T]) Save(ctx context.Context, entity T) error {
 	cmd := r.client.B().JsonSet().Key(entity.EntityID().String()).
 		Path("$").Value(string(jsonhelper.Encode(entity))).Build()
 	if err := r.client.Do(ctx, cmd).Error(); err != nil {

@@ -13,9 +13,10 @@ build:
 
 
 # Run tests
-test:
-	@echo "Running Go tests..."
-	go test ./...
+test-integration:
+	@echo "Running Integration tests..."
+	INTEGRATION_TEST=true go test ./... -v
+
 
 # Run Docker Compose services
 docker-compose-run:
