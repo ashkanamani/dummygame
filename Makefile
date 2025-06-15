@@ -27,7 +27,7 @@ docker-compose-run:
 # Ensure PostgreSQL is ready before running the application
 postgres_ready:
 	@echo "Waiting for PostgreSQL to start..."
-	@until docker exec postgresdb pg_isready -U postgres; do \
+	@until docker exec pg-game pg_isready -U postgres; do \
 		echo "Waiting for PostgreSQL to be ready..."; \
 		sleep 1; \
 	done
@@ -35,7 +35,7 @@ postgres_ready:
 # Run the Go application
 go_run:
 	@echo "Running the Go application..."
-	go run ./cmd/api
+	go run main.go serve
 
 # Stop and remove Docker Compose containers
 stop:

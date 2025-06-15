@@ -1,8 +1,13 @@
 package cmd
 
 import (
-	"fmt"
+	"github.com/ashkanamani/dummygame/internal/repository"
+	"github.com/ashkanamani/dummygame/internal/repository/redis"
+	"github.com/ashkanamani/dummygame/internal/service"
+	"github.com/ashkanamani/dummygame/internal/telegram"
 	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -16,7 +21,25 @@ var serveCmd = &cobra.Command{
 
 func serve(_ *cobra.Command, _ []string) {
 	_ = godotenv.Load()
-	fmt.Println("starting")
+
+	// Set up repositories
+	redisClient, err := redis.NewRedisClient(os.Getenv("REDIS_ADDRESS"))
+	if err != nil {
+		logrus.WithError(err).Fatal("could not connect to redis server.")
+	}
+	// set up app
+	accountRepository := repository.NewAccountRedisRepository(redisClient)
+	accountService := service.NewAccountService(accountRepository)
+	app := service.NewApp(accountService)
+
+	tg, err := telegram.NewTelegram(app, os.Getenv("TELEGRAM_API_TOKEN"))
+	if err != nil {
+		logrus.WithError(err).Fatalln("could not connect to telegram servers.")
+
+	}
+	logrus.Println("Starting the Bot.")
+	tg.Start()
+
 }
 
 func init() {
