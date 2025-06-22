@@ -3,6 +3,10 @@ package telegram
 import "gopkg.in/telebot.v4"
 
 func (t *Telegram) setupHandlers() {
+	// middlewares
+	t.bot.Use(t.registerMiddleware)
+
+	// handlers
 	t.bot.Handle("/start", t.start)
 }
 

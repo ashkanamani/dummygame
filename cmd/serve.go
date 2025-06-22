@@ -22,8 +22,8 @@ var serveCmd = &cobra.Command{
 func serve(_ *cobra.Command, _ []string) {
 	_ = godotenv.Load()
 
-	// Set up repositories
-	redisClient, err := redis.NewRedisClient(os.Getenv("REDIS_ADDRESS"))
+	// Setup repositories
+	redisClient, err := redis.NewRedisClient(os.Getenv("REDIS_URL"))
 	if err != nil {
 		logrus.WithError(err).Fatal("could not connect to redis server.")
 	}

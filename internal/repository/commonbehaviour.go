@@ -21,7 +21,7 @@ func NewRedisCommonBehaviour[T entity.Entity](client rueidis.Client) *RedisCommo
 		client: client,
 	}
 }
-
+	
 func (r *RedisCommonBehaviour[T]) Get(ctx context.Context, id entity.ID) (T, error) {
 	var t T
 	cmd := r.client.B().JsonGet().Key(id.String()).Path(".").Build()
