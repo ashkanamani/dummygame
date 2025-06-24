@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/ashkanamani/dummygame/internal/entity"
 	"gopkg.in/telebot.v4"
-	"time"
 )
 
 func (t *Telegram) registerMiddleware(next telebot.HandlerFunc) telebot.HandlerFunc {
@@ -14,9 +13,12 @@ func (t *Telegram) registerMiddleware(next telebot.HandlerFunc) telebot.HandlerF
 			FirstName: c.Sender().FirstName,
 			Username:  c.Sender().Username,
 		}
-		if err := t.App.Account.CreateOrUpdate(context.Background(), acc); err != nil {
+		acc, created, err := t.App.Account.CreateOrUpdate(context.Background(), acc)
+		if err != nil {
 			return err
 		}
+		c.Set("account", acc)
+		c.Set("is_just_created", created)
 		return next(c)
 	}
 }
