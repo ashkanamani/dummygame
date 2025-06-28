@@ -3,8 +3,8 @@ package telegram
 import (
 	"github.com/ashkanamani/dummygame/internal/service"
 	"github.com/ashkanamani/dummygame/internal/telegram/teleprompt"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/telebot.v4"
+	"log/slog"
 	"time"
 )
 
@@ -16,22 +16,24 @@ type Telegram struct {
 }
 
 func NewTelegram(app *service.App, apiToken string) (*Telegram, error) {
+	t := &Telegram{
+		App:        app,
+		TelePrompt: teleprompt.NewTelePrompt(),
+	}
 	pref := telebot.Settings{
-		Token:  apiToken,
-		Poller: &telebot.LongPoller{Timeout: 60 * time.Second},
+		Token:   apiToken,
+		Poller:  &telebot.LongPoller{Timeout: 60 * time.Second},
+		OnError: t.OnError,
 	}
 
 	bot, err := telebot.NewBot(pref)
 	if err != nil {
-		logrus.WithError(err).Error("could not connect to telegram servers")
+		slog.Error("could not connect to telegram servers", "error", err)
 		return nil, err
 	}
-	t := &Telegram{
-		App:        app,
-		bot:        bot,
-		TelePrompt: teleprompt.NewTelePrompt(),
-	}
-
+	slog.Info("bot created and connected to telegram servers")
+	t.bot = bot
+	
 	t.setupHandlers()
 
 	return t, nil

@@ -44,3 +44,7 @@ func (a *AccountService) CreateOrUpdate(ctx context.Context, account entity.Acco
 	}
 	return savedAccount, false, err
 }
+
+func (a *AccountService) Update(ctx context.Context, account entity.Account) error {
+	return a.accounts.Save(ctx, account)
+}

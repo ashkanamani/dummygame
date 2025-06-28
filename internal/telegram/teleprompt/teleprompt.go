@@ -1,7 +1,9 @@
 package teleprompt
 
 import (
+	"fmt"
 	"gopkg.in/telebot.v4"
+	"log/slog"
 	"sync"
 	"time"
 )
@@ -34,11 +36,13 @@ func (t *TelePrompt) Register(userID int64) <-chan Prompt {
 func (t *TelePrompt) Dispatch(userID int64, c telebot.Context) bool {
 	ch, loaded := t.accountPrompts.LoadAndDelete(userID)
 	if !loaded {
+		slog.Info("channel of currect user did not loaded in Dispatch function.")
 		return false
 	}
+	slog.Info("channel of currect user loaded in Dispatch function.")
 	select {
-
 	case ch.(chan Prompt) <- Prompt{TeleCtx: c}:
+		fmt.Println("data sended:")
 	default:
 		return false
 	}
@@ -49,8 +53,9 @@ func (t *TelePrompt) AsMessage(userID int64, timeout time.Duration) (*telebot.Me
 	ch := t.Register(userID)
 	select {
 	case val := <-ch:
-		return val.TeleCtx.Message(), true
+		fmt.Println("data received:", val)
+		return val.TeleCtx.Message(), false
 	case <-time.After(timeout):
-		return nil, false
+		return nil, true
 	}
 }

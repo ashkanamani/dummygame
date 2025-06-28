@@ -1,9 +1,11 @@
 package telegram
 
 import (
+	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"gopkg.in/telebot.v4"
-	"time"
+	"log/slog"
 )
 
 func (t *Telegram) setupHandlers() {
@@ -11,35 +13,27 @@ func (t *Telegram) setupHandlers() {
 	t.bot.Use(t.registerMiddleware)
 
 	// handlers
-	t.bot.Handle("/start", t.start)
+	t.bot.Handle("/start", t.startHandler)
 
-	t.bot.Handle(telebot.OnText, func(c telebot.Context) error {
-		if t.TelePrompt.Dispatch(c.Sender().ID, c) {
-			return nil
-		}
-		return c.Reply("I did not understand that text!")
-	})
+	t.bot.Handle(telebot.OnText, t.TextHandler)
 }
 
-func (t *Telegram) start(c telebot.Context) error {
-	isJustCreated := c.Get("is_just_created").(bool)
-
-	_ = c.Reply("Enter your name")
-
-	ch := t.TelePrompt.Register(c.Sender().ID)
-
-	message, isTimeout := t.TelePrompt.AsMessage(c.Sender().ID, time.Minute)
-	if isTimeout {
-		_ = c.Reply("Timeout!")
+func (t *Telegram) TextHandler(c telebot.Context) error {
+	canBeDispatched := t.TelePrompt.Dispatch(c.Sender().ID, c)
+	if canBeDispatched {
 		return nil
 	}
-	select {
-	case val := <-ch:
-		_ = c.Reply(fmt.Sprintln("You said: ", val.TeleCtx.Text()))
-	case <-time.After(time.Second * 15):
-	default:
 
+	// per state
+	return c.Reply("I did not understand that text!")
+}
+
+func (t *Telegram) OnError(err error, c telebot.Context) {
+	if errors.Is(err, ErrInputTimeout) {
+		return
 	}
-	return c.Reply(fmt.Sprintln(isJustCreated))
+	errorId := uuid.New().String()
 
+	slog.Error("unhandled telegram error:", "tracing_id", errorId)
+	_ = c.Reply(fmt.Sprint("there is an error in processing messages. error id:", errorId))
 }

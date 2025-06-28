@@ -14,6 +14,7 @@ func (i ID) Type() string {
 func (i ID) ID() string {
 	return strings.Split(string(i), ":")[1]
 }
+
 func (i ID) String() string {
 	return string(i)
 }
